@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <style>
+        .slide {
+            border: 1px solid red;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding-left: 16px;
+        }
+
+        .slide:not(:first-child) {
+            margin-top: 8px;
+        }
+
+        .slide.bg-dark {
+            background-color: rgb(66, 66, 66);
+            color: aliceblue;
+        }
+
+        #preview {
+            overflow-y: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div style="display: flex; flex-direction: row; justify-content: space-between;">
+    <div id="container" style="width: 800px; height: 600px; border: 1px solid grey"></div>
+    <div id="preview" style="width: 800px; height: 600px; border: 1px solid grey"></div>
+</div>
+    <script>
+        var require = { paths: { vs: '/static/monaco' } };
+    </script>
+    <script src="/static/monaco/loader.js"></script>
+    <script src="/static/monaco/editor/editor.main.nls.js"></script>
+    <script src="/static/monaco/editor/editor.main.js"></script>
+
+    <script>
+        const currentData = ` <%= data.replaceAll("`", '\\`') %>`;
+        const previewContainer = document.getElementById('preview');
+
+        let lastEdit = undefined;
+        const loadPreview = (editor) => {
+            if (lastEdit) {
+                clearTimeout(lastEdit);
+            }
+
+            lastEdit = setTimeout(async () => {
+                const response = await fetch('/edit/parse', {
+                    body: JSON.stringify({ data: editor.getValue() }),
+                    method: 'post',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                const data = await response.json();
+
+                previewContainer.innerHTML = data.html;
+                lastEdit = undefined;
+            }, 1000);
+        };
+
+        setTimeout(() => {
+            const editor = monaco.editor.create(document.getElementById('container'), {
+                value: currentData,
+                language: 'markdown'
+            });
+
+            editor.onDidChangeModelContent((a, b, c) => {
+                loadPreview(editor);
+            });
+
+            editor.focus();
+            loadPreview(editor);
+        }, 1000)
+    </script>
+</body>
+
+</html>
