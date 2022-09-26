@@ -174,6 +174,7 @@
 
                 this.markdownEditor = monaco.editor.create(this.$markdownEditor, {
                     value: data.md,
+                    theme: 'vs-dark',
                     language: 'markdown',
                     automaticLayout: true,
                 });
@@ -189,7 +190,16 @@
 
                 this.markdownEditor.focus();
                 this.loadPreview();
-            };
+            }
+
+            async setTheme(theme) {
+
+                const response = await fetch('/theme/' + theme);
+                if (response.ok) {
+                    monaco.editor.defineTheme(theme, await response.json());
+                    monaco.editor.setTheme(theme);
+                }
+            }
         }
 
         mdHandler = new MarkdownHandler();
