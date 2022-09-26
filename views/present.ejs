@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Present</title>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        #container {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            height: 100vh;
+        }
+
+        #container>div {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+
+        #presentationContainer {
+            display: flex;
+            flex-grow: 1;
+            flex-direction: column;
+        }
+
+        #presentationContainer>div {
+            flex: 1;
+        }
+
+        #currentSlide {
+            border: 1px solid darkgreen;
+        }
+
+        #nextSlide {
+            border: 1px solid darkorange;
+        }
+
+        #controlPanel {
+            display: flex;
+            flex-direction: column;
+        }
+
+        #notes {
+            flex: 4;
+        }
+
+        #controls {
+            flex: 1;
+        }
+
+        #controls button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 0 8px;
+            cursor: pointer;
+        }
+
+        #controls button:hover {
+            box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.24);
+        }
+
+        #presentation {
+            display: none;
+        }
+    </style>
+
+</head>
+
+<body>
+    <div id="container">
+        <div id="controlPanel">
+            <div id="notes">
+                <h2>Notes</h2>
+                <div></div>
+            </div>
+            <div id="controls">
+                <h2>Controls</h2>
+                <div>
+                    <button onclick="presenter.updateSlide('first')">First</button>
+                    <button onclick="presenter.updateSlide('prev')">Prev</button>
+                    <button onclick="presenter.updateSlide('next')">Next</button>
+                    <button onclick="presenter.updateSlide('last')">Last</button>
+                </div>
+            </div>
+        </div>
+        <div>
+            <h2>Presentation</h2>
+            <div id="presentationContainer">
+                <div id="presentation"></div>
+                <div id="currentSlide"></div>
+                <div id="nextSlide"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class Presenter {
+            presentation = `<%= presentation.replaceAll("`", '\\`') %>`;
+            $presentation = document.getElementById('presentation');
+            $currentSlide = document.getElementById('currentSlide');
+            $nextSlide = document.getElementById('nextSlide');
+
+            currentSlide;
+            slides;
+            socket;
+
+            constructor() {
+                this.socket = io();
+
+
+                this.socket.on('error', (errorMessage) => {
+                    console.error(errorMessage);
+                });
+            }
+            updateSlide(what) {
+                switch (what) {
+                    case 'first': this.currentSlide = 1; break;
+                    case 'prev': this.currentSlide--; this.currentSlide = Math.max(1, this.currentSlide); break;
+                    case 'next': this.currentSlide++; this.currentSlide = Math.min(this.slides?.length ?? 1, this.currentSlide); break;
+                    case 'last': this.currentSlide = this.slides?.length ?? 1; break;
+                    default: return;
+                }
+
+                this.setSlide();
+            }
+            setSlide() {
+                if (!this.slides) {
+                    return;
+                }
+
+                this.socket.emit('set slide', this.presentation, this.currentSlide);
+
+                const currentSlide = [...this.slides.values()].find(element => element.dataset.slideNo == this.currentSlide);
+                const nextSlide = [...this.slides.values()].find(element => element.dataset.slideNo == this.currentSlide + 1);
+
+                this.$currentSlide.innerHTML = currentSlide?.outerHTML ?? "";
+                this.$nextSlide.innerHTML = nextSlide?.outerHTML ?? "";
+            }
+
+            async initialize() {
+                this.currentSlide = 1;
+                const response = await fetch('/present/' + this.presentation + '/html');
+                if (response.redirected) {
+                    location.href = response.url;
+                    return;
+                }
+                if (!response.ok) {
+                    return;
+                }
+
+                const parsedPresentation = await response.json();
+                this.$presentation.innerHTML = parsedPresentation.html;
+
+                // get all slides
+                this.slides = document.querySelectorAll('#presentation .slide');
+
+                this.socket.emit('present', this.presentation);
+                this.setSlide();
+            }
+        }
+
+
+
+        const presenter = new Presenter();
+        presenter.initialize();
+
+    </script>
+</body>
+
+</html>
