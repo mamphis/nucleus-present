@@ -14,6 +14,10 @@ export class MarkdownRenderer {
     private constructor() {
         this.md = new MarkdownIt();
         this.md.use(slideExtension);
+        this.md.use(require('markdown-it-texmath'), {
+            engine: require('katex'),
+            delimiters: 'dollars',
+        });
     }
 
     render(text: string) {

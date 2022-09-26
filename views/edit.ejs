@@ -6,10 +6,11 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
-
+    <link rel="stylesheet" href="/style/katex.min.css">
     <style>
-        .slide {
-            border: 1px solid red;
+        #preview>.slide {
+            margin: 4px;
+            border: 1px solid darkblue;
             min-height: 200px;
             display: flex;
             flex-direction: column;
@@ -17,13 +18,22 @@
             padding-left: 16px;
         }
 
-        .slide:not(:first-child) {
+        #preview>.slide:not(:first-child) {
             margin-top: 8px;
         }
 
-        .slide.bg-dark {
+        #preview>.slide.bg-dark {
             background-color: rgb(66, 66, 66);
             color: aliceblue;
+        }
+
+        #preview eq {
+            display: flex;
+            justify-content: center;
+        }
+
+        #preview>:not(.slide) {
+            background-color: red;
         }
     </style>
     <style>
@@ -83,22 +93,42 @@
         <div id="previewContainer">
             <h2>Preview</h2>
             <style id="previewStyle" title="previewStyle">
-
             </style>
             <div id="preview"></div>
         </div>
     </div>
 
     <script>
-        const currentData = `<%= data.replaceAll("`", '\\`') %>`;
-
         class MarkdownHandler {
             $previewContainer = document.getElementById('preview');
             $previewStyle = document.getElementById('previewStyle');
             $markdownEditor = document.getElementById('markdownEditor');
             $styleEditor = document.getElementById('styleEditor');
             lastEdit = undefined;
+
             constructor() {
+                document.addEventListener("keydown", async e => {
+                    if ((window.navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey) && e.keyCode == 83) {
+                        e.preventDefault();
+                        await this.save();
+                    }
+                }, false);
+            }
+
+            async save() {
+                const response = await fetch(window.location.href, {
+                    body: JSON.stringify({ data: this.markdownEditor.getValue(), style: this.styleEditor.getValue() }),
+                    method: 'post',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (response.ok) {
+                    console.log("Done");
+                } else {
+                    alert("Cannot save slide");
+                }
             }
 
             loadPreview() {
@@ -134,17 +164,22 @@
             }
 
             async loadEditor() {
+                const response = await fetch(location.href + '/data');
+                const data = await response.json();
+
                 if (typeof monaco === "undefined") {
                     // debugger;
                     await new Promise(res => setTimeout(res, 1000));
                 }
 
                 this.markdownEditor = monaco.editor.create(this.$markdownEditor, {
-                    value: currentData,
+                    value: data.md,
                     language: 'markdown',
                     automaticLayout: true,
                 });
+
                 this.styleEditor = monaco.editor.create(this.$styleEditor, {
+                    value: data.style,
                     language: 'css',
                     automaticLayout: true,
                 });

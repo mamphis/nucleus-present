@@ -10,6 +10,7 @@ export class Server {
         this.app.set('view engine', 'ejs');
 
         this.app.use('/node_modules/monaco-editor/min/vs', express.static('node_modules/monaco-editor/min/vs'))
+        this.app.use('/style', express.static('node_modules/katex/dist'))
 
         this.app.use('/edit', editRouter);
         this.app.use((req, res, next) => {
