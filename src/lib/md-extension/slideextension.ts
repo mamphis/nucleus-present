@@ -6,14 +6,14 @@ export const slideExtension: PluginSimple = (md: MarkdownIt) => {
     const slideMarker = '@@@'
 
     function validate(params: string, markup: string) {
-        return markup.trim().match(/^@@@\s*(.*)$/);
+        return markup.trim().match(/^@@@$/);
     }
 
     const parser: RuleBlock = (state, startLine, endLine, silent): boolean => {
         state.env.slideNo = state.env.slideNo ?? 0;
 
-        var nextLine, marker_count, markup, params, token,
-            old_parent, old_line_max,
+        var nextLine, markup, params, token,
+            oldParent, oldLineMax,
             auto_closed = false,
             start = state.bMarks[startLine] + state.tShift[startLine],
             max = state.eMarks[startLine];
@@ -68,13 +68,13 @@ export const slideExtension: PluginSimple = (md: MarkdownIt) => {
             }
 
             // We have a new Slide...
-            nextLine--;
+            // nextLine--;
             // found!
             break;
         }
 
-        old_parent = state.parentType;
-        old_line_max = state.lineMax;
+        oldParent = state.parentType;
+        oldLineMax = state.lineMax;
         state.parentType = 'root';
 
         // Close the containerSlide if it was opened before
@@ -82,21 +82,21 @@ export const slideExtension: PluginSimple = (md: MarkdownIt) => {
 
         // this will prevent lazy continuations from ever going past our end marker
         state.lineMax = nextLine;
-        token = state.push('container_slide_open', 'div', 1);
+        token = state.push('container_slide_open', 'section', 1);
         token.markup = markup;
         token.block = true;
         token.info = params;
         token.level = ++state.env.slideNo;
-        token.map = [startLine, nextLine];
+        token.map = [startLine, nextLine - 1];
 
-        state.md.block.tokenize(state, startLine + 1, nextLine);
+        state.md.block.tokenize(state, startLine + 1, nextLine + (auto_closed ? 1 : 0));
 
-        token = state.push('container_slide_close', 'div', -1);
+        token = state.push('container_slide_close', 'section', -1);
         token.markup = state.src.slice(start, pos);
         token.block = true;
 
-        state.parentType = old_parent;
-        state.lineMax = old_line_max;
+        state.parentType = oldParent;
+        state.lineMax = oldLineMax;
         state.line = nextLine + (auto_closed ? 1 : 0);
 
         return true;
