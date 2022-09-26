@@ -20,6 +20,22 @@ router.post('/parse', (req: Request, res: Response, next: NextFunction) => {
 });
 
 router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
+    if (!req.headers.accept?.split(',').some(type => type.startsWith('text/html'))) {
+        // Filename is req.params.id
+        if (req.headers.referer) {
+            const refererUrl = new URL(req.headers.referer);
+            const slideDir = resolve('./data', refererUrl.pathname.split('/').reverse()[0]);
+            try {
+                await stat(resolve(slideDir, req.params.id))
+                return res.sendFile(req.params.id, { root: slideDir });
+            } catch {
+                return res.status(404).end();
+            }
+        } else {
+            return res.status(404).end();
+        }
+    }
+
     return res.render('edit', {
         name: req.params.id,
     });
@@ -36,6 +52,7 @@ router.get('/:id/data', async (req: Request, res: Response, next: NextFunction) 
         });
     }
 
+    // FIXME: prevent path traversal.
     const slidesFile = resolve('./data', slideDir, 'slides');
     const styleFile = resolve('./data', slideDir, 'style');
 
