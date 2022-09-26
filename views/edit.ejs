@@ -42,6 +42,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         #container {
@@ -172,9 +173,37 @@
                     await new Promise(res => setTimeout(res, 1000));
                 }
 
+                // Register new markdown tokens
+                const customTokenizer = {
+                    tokenizer: {
+                        root: [
+                            [/^\s*(@@@@@)((?:\s+.*)?)/, ['support.class', 'string']]
+                        ]
+                    }
+                }
+
+                const allLangs = await monaco.languages.getLanguages()
+                const { language: mdLang } = await allLangs.find(({ id }) => id === 'markdown').loader()
+                
+                for (const key in customTokenizer) {
+                    const value = customTokenizer[key]
+                    if (key === 'tokenizer') {
+                        for (const category in value) {
+                            const tokenDefs = value[category];
+
+                            if (!mdLang.tokenizer.hasOwnProperty(category)) {
+                                mdLang.tokenizer[category] = [];
+                            }
+
+                            if (Array.isArray(tokenDefs)) {
+                                mdLang.tokenizer[category].splice(0, 0, ...tokenDefs);
+                            }
+                        }
+                    } 
+                }
+
                 this.markdownEditor = monaco.editor.create(this.$markdownEditor, {
                     value: data.md,
-                    theme: 'vs-dark',
                     language: 'markdown',
                     automaticLayout: true,
                 });
@@ -185,15 +214,17 @@
                     automaticLayout: true,
                 });
 
+                console.log(mdLang);
+
                 this.markdownEditor.onDidChangeModelContent(this.loadPreview.bind(this));
                 this.styleEditor.onDidChangeModelContent(this.loadPreview.bind(this));
 
                 this.markdownEditor.focus();
+                this.setTheme('tomorrowNight');
                 this.loadPreview();
             }
 
             async setTheme(theme) {
-
                 const response = await fetch('/theme/' + theme);
                 if (response.ok) {
                     monaco.editor.defineTheme(theme, await response.json());
