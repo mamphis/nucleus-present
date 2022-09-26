@@ -25,65 +25,147 @@
             background-color: rgb(66, 66, 66);
             color: aliceblue;
         }
+    </style>
+    <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        #container {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            height: 100vh;
+        }
+
+        #container>div {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #editors>div {
+            flex-grow: 1;
+            display: flex;
+            width: 100%;
+            flex-direction: column;
+        }
+
+        #markdownEditor,
+        #styleEditor {
+            flex-grow: 1;
+            border: 1px solid grey
+        }
 
         #preview {
+            flex: 1;
+            border: 1px solid grey;
             overflow-y: auto;
         }
     </style>
 </head>
 
 <body>
-    <div style="display: flex; flex-direction: row; justify-content: space-between;">
-    <div id="container" style="width: 800px; height: 600px; border: 1px solid grey"></div>
-    <div id="preview" style="width: 800px; height: 600px; border: 1px solid grey"></div>
-</div>
-    <script>
-        var require = { paths: { vs: '/static/monaco' } };
-    </script>
-    <script src="/static/monaco/loader.js"></script>
-    <script src="/static/monaco/editor/editor.main.nls.js"></script>
-    <script src="/static/monaco/editor/editor.main.js"></script>
+    <div id="container">
+        <div id="editors">
+            <div>
+                <h2>Edit your slides</h2>
+                <div id="markdownEditor"></div>
+            </div>
+            <div>
+                <h2>Edit your style</h2>
+                <div id="styleEditor"></div>
+            </div>
+        </div>
+        <div id="previewContainer">
+            <h2>Preview</h2>
+            <style id="previewStyle" title="previewStyle">
+
+            </style>
+            <div id="preview"></div>
+        </div>
+    </div>
 
     <script>
-        const currentData = ` <%= data.replaceAll("`", '\\`') %>`;
-        const previewContainer = document.getElementById('preview');
+        const currentData = `<%= data.replaceAll("`", '\\`') %>`;
 
-        let lastEdit = undefined;
-        const loadPreview = (editor) => {
-            if (lastEdit) {
-                clearTimeout(lastEdit);
+        class MarkdownHandler {
+            $previewContainer = document.getElementById('preview');
+            $previewStyle = document.getElementById('previewStyle');
+            $markdownEditor = document.getElementById('markdownEditor');
+            $styleEditor = document.getElementById('styleEditor');
+            lastEdit = undefined;
+            constructor() {
             }
 
-            lastEdit = setTimeout(async () => {
-                const response = await fetch('/edit/parse', {
-                    body: JSON.stringify({ data: editor.getValue() }),
-                    method: 'post',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+            loadPreview() {
+                if (this.lastEdit) {
+                    return;
+                }
+
+                this.lastEdit = setTimeout(async () => {
+                    const response = await fetch('/edit/parse', {
+                        body: JSON.stringify({ data: this.markdownEditor.getValue(), style: this.styleEditor.getValue() }),
+                        method: 'post',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    });
+
+                    const data = await response.json();
+                    for (let i = 0; i < document.styleSheets.length; i++) {
+                        const css = document.styleSheets.item(i);
+                        if (css.title === this.$previewStyle.id) {
+                            const newStyle = document.createElement('style');
+                            newStyle.id = css.title;
+                            newStyle.title = css.title;
+                            newStyle.textContent = this.styleEditor.getValue();
+                            css.ownerNode.replaceWith(newStyle)
+                            break;
+                        }
+                    }
+
+                    this.$previewContainer.innerHTML = data.html;
+                    this.lastEdit = undefined;
+                }, 1000);
+            }
+
+            async loadEditor() {
+                if (typeof monaco === "undefined") {
+                    // debugger;
+                    await new Promise(res => setTimeout(res, 1000));
+                }
+
+                this.markdownEditor = monaco.editor.create(this.$markdownEditor, {
+                    value: currentData,
+                    language: 'markdown',
+                    automaticLayout: true,
+                });
+                this.styleEditor = monaco.editor.create(this.$styleEditor, {
+                    language: 'css',
+                    automaticLayout: true,
                 });
 
-                const data = await response.json();
+                this.markdownEditor.onDidChangeModelContent(this.loadPreview.bind(this));
+                this.styleEditor.onDidChangeModelContent(this.loadPreview.bind(this));
 
-                previewContainer.innerHTML = data.html;
-                lastEdit = undefined;
-            }, 1000);
-        };
+                this.markdownEditor.focus();
+                this.loadPreview();
+            };
+        }
 
-        setTimeout(() => {
-            const editor = monaco.editor.create(document.getElementById('container'), {
-                value: currentData,
-                language: 'markdown'
-            });
-
-            editor.onDidChangeModelContent((a, b, c) => {
-                loadPreview(editor);
-            });
-
-            editor.focus();
-            loadPreview(editor);
-        }, 1000)
+        mdHandler = new MarkdownHandler();
     </script>
+    <script>
+        var require = { paths: { vs: '../node_modules/monaco-editor/min/vs' } };
+    </script>
+    <script src="../node_modules/monaco-editor/min/vs/loader.js"></script>
+    <script src="../node_modules/monaco-editor/min/vs/editor/editor.main.nls.js"></script>
+    <script src="../node_modules/monaco-editor/min/vs/editor/editor.main.js" onload="mdHandler.loadEditor()"></script>
+
 </body>
 
 </html>
