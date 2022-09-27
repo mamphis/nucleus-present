@@ -161,7 +161,15 @@
                             newStyle.id = css.title;
                             newStyle.title = css.title;
                             newStyle.textContent = this.styleEditor.getValue();
-                            css.ownerNode.replaceWith(newStyle)
+                            css.ownerNode.replaceWith(newStyle);
+
+                            const newCss = document.styleSheets.item(i);
+                            [...newCss.rules].forEach(rule => {
+                                if (rule.type === rule.STYLE_RULE) {
+                                    rule.selectorText = rule.selectorText.split(',').map(selector => '#preview ' + selector).join(', ');
+                                }
+                            });
+
                             break;
                         }
                     }
@@ -184,7 +192,11 @@
                 const customTokenizer = {
                     tokenizer: {
                         root: [
-                            [/^\s*(@@@@@)((?:\s+.*)?)/, ['support.class', 'string']]
+                            [/^\s*(@@@@@)((?:\s+.*)?)/, ['support.class', 'string']],
+                            [/^\s*---\s*$/, { token: 'string', next: '@yaml_header', nextEmbedded: 'yaml' }],
+                        ],
+                        yaml_header: [
+                            [/^\s*---\s*$/, { token: 'string', next: '@pop', nextEmbedded: '@pop' }],
                         ]
                     }
                 }

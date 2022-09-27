@@ -78,9 +78,11 @@
         .text-left {
             text-align: left;
         }
+
         .text-center {
             text-align: center;
         }
+
         .text-right {
             text-align: right;
         }
@@ -95,7 +97,7 @@
         <div id="presentation-info">
             <span class="text-left" id="prop-author"></span>
             <span class="text-center" id="prop-title"></span>
-            <span class="text-right" >Slide <span id="slide">0</span>/<span id="maxSlide">0</span>
+            <span class="text-right">Slide <span id="slide">0</span>/<span id="maxSlide">0</span>
                 <span id="prop-date"></span>
             </span>
         </div>
@@ -195,6 +197,14 @@
                         newStyle.title = css.title;
                         newStyle.textContent = style;
                         css.ownerNode.replaceWith(newStyle)
+
+                        const newCss = document.styleSheets.item(i);
+                        [...newCss.rules].forEach(rule => {
+                            if (rule.type === rule.STYLE_RULE) {
+                                rule.selectorText = rule.selectorText.split(',').map(selector => '#presentation ' + selector).join(', ');
+                            }
+                        });
+
                         break;
                     }
                 }
