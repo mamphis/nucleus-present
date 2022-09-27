@@ -77,6 +77,12 @@
             border: 1px solid grey;
             overflow-y: auto;
         }
+
+        #preview blockquote {
+            background-color: lightgray;
+            border-left: orange 5px solid;
+            padding-left: 8px;
+        }
     </style>
 </head>
 
@@ -160,7 +166,7 @@
                         }
                     }
 
-                    this.$previewContainer.innerHTML = data.html;
+                    this.$previewContainer.innerHTML = data.html.html;
                     this.lastEdit = undefined;
                 }, 1000);
             }
@@ -185,7 +191,7 @@
 
                 const allLangs = await monaco.languages.getLanguages()
                 const { language: mdLang } = await allLangs.find(({ id }) => id === 'markdown').loader()
-                
+
                 for (const key in customTokenizer) {
                     const value = customTokenizer[key]
                     if (key === 'tokenizer') {
@@ -200,7 +206,7 @@
                                 mdLang.tokenizer[category].splice(0, 0, ...tokenDefs);
                             }
                         }
-                    } 
+                    }
                 }
 
                 this.markdownEditor = monaco.editor.create(this.$markdownEditor, {

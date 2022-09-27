@@ -31,9 +31,9 @@ router.get('/:id/html', async (req: Request, res: Response, next: NextFunction) 
     const md = await stat(slidesFile).then(async () => (await readFile(slidesFile, { encoding: 'utf-8' })).toString()).catch(() => '');
     const style = await stat(styleFile).then(async () => (await readFile(styleFile)).toString()).catch(() => '');
 
-    const html = MarkdownRenderer.it.render(md);
+    const presentation = MarkdownRenderer.it.render(md);
     return res.json({
-        html,
+        presentation,
         style,
     });
 });

@@ -47,7 +47,7 @@ router.get('/:id/data', async (req: Request, res: Response, next: NextFunction) 
     if (!slideDir) {
         return res.json({
             name: req.params.id,
-            md: '',
+            md: `---\ntitle: "${req.params.id}"\nauthor: ""\ndate: "${Intl.DateTimeFormat('de-DE').format(new Date())}"\n---\n@@@\n`,
             style: '',
         });
     }

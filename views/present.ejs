@@ -39,20 +39,29 @@
             flex-direction: column;
         }
 
-        #presentationContainer>div {
-            flex: 1;
-            flex-direction: column;
-            justify-content: center;
-            padding-left: 16px;
-            height: 100%;
-        }
-
         #presentationContainer .slide {
             display: flex;
             flex-direction: column;
             justify-content: center;
             padding-left: 16px;
             height: 100%;
+            width: 100%;
+            position: absolute;
+            padding: 16px;
+            box-sizing: border-box;
+        }
+
+        #presentationContainer blockquote {
+            background-color: lightgray;
+            border-left: orange 5px solid;
+            padding-left: 8px;
+        }
+        #currentSlide,
+        #nextSlide {
+            position: relative;
+            flex: 1;
+            flex-direction: column;
+            justify-content: center;
         }
 
         #currentSlide {
@@ -208,7 +217,7 @@
                 }
 
                 const parsedPresentation = await response.json();
-                this.$presentation.innerHTML = parsedPresentation.html;
+                this.$presentation.innerHTML = parsedPresentation.presentation.html;
 
                 // get all slides
                 this.slides = document.querySelectorAll('#presentation .slide');

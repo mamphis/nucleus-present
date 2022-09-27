@@ -29,25 +29,24 @@
             height: 100vh;
         }
 
-        #container>div {
-            display: flex;
-            flex-direction: column;
-        }
-
         #presentation {
             flex-grow: 1;
+            position: relative;
         }
 
         #presentation .slide {
             /* display: none; */
             display: flex;
             position: absolute;
+            height: 100%;
+            width: 100%;
             flex-direction: column;
             justify-content: center;
-            padding-left: 16px;
-            height: 100%;
             transform: translateX(-100vw);
             transition: transform 0.3s linear;
+            overflow: hidden;
+            padding: 16px;
+            box-sizing: border-box;
         }
 
         #presentation .slide.active {
@@ -56,22 +55,49 @@
 
         }
 
+        #presentation blockquote {
+            background-color: lightgray;
+            border-left: orange 5px solid;
+            padding-left: 8px;
+        }
+
         #presentation-info {
-            height: 5%;
+            max-height: fit-content;
             background-color: #ccc;
             display: flex;
-            justify-content: center;
+            flex-direction: row !important;
+            justify-content: space-between;
             align-items: center;
+            padding: 8px 32px;
+        }
+
+        #presentation-info>span {
+            flex: 1;
+        }
+
+        .text-left {
+            text-align: left;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .text-right {
+            text-align: right;
         }
     </style>
 
 </head>
 
 <body>
+    <style title="presentationStyle"></style>
     <div id="container">
         <div id="presentation"></div>
         <div id="presentation-info">
-            <span>Slide <span id="slide">0</span>/<span id="maxSlide">0</span></span>
+            <span class="text-left" id="prop-author"></span>
+            <span class="text-center" id="prop-title"></span>
+            <span class="text-right" >Slide <span id="slide">0</span>/<span id="maxSlide">0</span>
+                <span id="prop-date"></span>
+            </span>
         </div>
     </div>
 
@@ -151,11 +177,39 @@
                 }
 
                 const parsedPresentation = await response.json();
-                this.$presentation.innerHTML = parsedPresentation.html;
+                this.$presentation.innerHTML = parsedPresentation.presentation.html;
 
+                this.applyHeaders(parsedPresentation.presentation.headers)
+                this.applyStyle(parsedPresentation.style);
                 // get all slides
                 this.slides = [...document.querySelectorAll('#presentation .slide')];
                 this.setSlide();
+            }
+
+            applyStyle(style) {
+                for (let i = 0; i < document.styleSheets.length; i++) {
+                    const css = document.styleSheets.item(i);
+                    if (css.title === 'presentationStyle') {
+                        const newStyle = document.createElement('style');
+                        newStyle.id = css.title;
+                        newStyle.title = css.title;
+                        newStyle.textContent = style;
+                        css.ownerNode.replaceWith(newStyle)
+                        break;
+                    }
+                }
+            }
+
+            applyHeaders(headers) {
+                for (const key in headers) {
+                    if (Object.hasOwnProperty.call(headers, key)) {
+                        const value = headers[key];
+                        const prop = document.getElementById('prop-' + key)
+                        if (prop) {
+                            prop.innerText = value;
+                        }
+                    }
+                }
             }
         }
 
