@@ -2,6 +2,7 @@ import MarkdownIt from "markdown-it";
 import { slideExtension } from "./md-extension/slideextension";
 import hljs from 'highlight.js';
 import { parse } from "yaml";
+import { commentExtension } from "./md-extension/commentextension";
 
 type Dictionary<V> = { [key: string | number | symbol]: V };
 
@@ -35,6 +36,7 @@ export class MarkdownRenderer {
             }
         });
         this.md.use(slideExtension);
+        this.md.use(commentExtension);
         this.md.use(require('markdown-it-texmath'), {
             engine: require('katex'),
             delimiters: 'dollars',

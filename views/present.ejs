@@ -76,6 +76,7 @@
         #controlPanel {
             display: flex;
             flex-direction: column;
+            padding: 8px;
         }
 
         #notes {
@@ -145,6 +146,7 @@
             $currentSlide = document.getElementById('currentSlide');
             $nextSlide = document.getElementById('nextSlide');
             $watcherCount = document.getElementById('watcherCount');
+            $notes = document.querySelector('#notes div');
 
             currentSlide;
             slides;
@@ -152,7 +154,6 @@
 
             constructor() {
                 this.socket = io();
-
 
                 this.socket.on('error', (errorMessage) => {
                     console.error(errorMessage);
@@ -167,7 +168,7 @@
 
                 this.socket.on('update watchers', (count) => {
                     console.log('update watchers', count);
-                    this.$watcherCount.innerText = count;
+                    this.$watcherCount.textContent = count;
                 })
 
                 document.onkeydown = (ev) => {
@@ -205,6 +206,11 @@
 
                 this.$currentSlide.innerHTML = currentSlide?.outerHTML ?? "";
                 this.$nextSlide.innerHTML = nextSlide?.outerHTML ?? "";
+
+                this.$notes.innerHTML = '';
+                const comments = [...presenter.$currentSlide.querySelectorAll('.comment')];
+                comments.forEach(comment => comment.setAttribute('style', ''));
+                this.$notes.append(...comments);
             }
 
             async initialize() {

@@ -159,8 +159,8 @@
 
                 visibleSlide?.classList.add('active');
 
-                this.$maxSlide.innerText = this.slides.length;
-                this.$slide.innerText = this.currentSlide;
+                this.$maxSlide.textContent = this.slides.length;
+                this.$slide.textContent = this.currentSlide;
             }
 
             async initialize() {
@@ -216,17 +216,14 @@
                         const value = headers[key];
                         const prop = document.getElementById('prop-' + key)
                         if (prop) {
-                            prop.innerText = value;
+                            prop.textContent = value;
                         }
                     }
                 }
             }
         }
 
-
-
         const viewer = new Viewer();
-
     </script>
 </body>
 

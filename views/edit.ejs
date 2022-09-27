@@ -192,8 +192,10 @@
                 const customTokenizer = {
                     tokenizer: {
                         root: [
+                            [/^\s*'\s.+$/, 'comment'],
                             [/^\s*(@@@@@)((?:\s+.*)?)/, ['support.class', 'string']],
                             [/^\s*---\s*$/, { token: 'string', next: '@yaml_header', nextEmbedded: 'yaml' }],
+
                         ],
                         yaml_header: [
                             [/^\s*---\s*$/, { token: 'string', next: '@pop', nextEmbedded: '@pop' }],
