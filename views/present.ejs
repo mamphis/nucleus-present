@@ -158,13 +158,25 @@
                     console.log('update watchers', count);
                     this.$watcherCount.innerText = count;
                 })
+
+                document.onkeydown = (ev) => {
+                    this.updateSlide(ev.key);
+                    console.log(ev.key);
+                }
             }
+
             updateSlide(what) {
                 switch (what) {
-                    case 'first': this.currentSlide = 1; break;
-                    case 'prev': this.currentSlide--; this.currentSlide = Math.max(1, this.currentSlide); break;
-                    case 'next': this.currentSlide++; this.currentSlide = Math.min(this.slides?.length ?? 1, this.currentSlide); break;
-                    case 'last': this.currentSlide = this.slides?.length ?? 1; break;
+                    case 'first':
+                        this.currentSlide = 1; break;
+                    case 'prev':
+                    case 'ArrowLeft':
+                        this.currentSlide--; this.currentSlide = Math.max(1, this.currentSlide); break;
+                    case 'next':
+                    case 'ArrowRight':
+                        this.currentSlide++; this.currentSlide = Math.min(this.slides?.length ?? 1, this.currentSlide); break;
+                    case 'last':
+                        this.currentSlide = this.slides?.length ?? 1; break;
                     default: return;
                 }
 
