@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/style/katex.min.css">
     <title>Present</title>
 
     <script src="/socket.io/socket.io.js"></script>
@@ -19,23 +20,37 @@
 
         #container {
             display: flex;
-            flex-direction: row;
-            justify-content: space-between;
+            flex-direction: column;
             height: 100vh;
         }
 
         #container>div {
-            flex: 1;
             display: flex;
             flex-direction: column;
         }
 
+        #presentation {
+            flex-grow: 1;
+        }
+
         #presentation .slide {
             display: none;
+            flex-direction: column;
+            justify-content: center;
+            padding-left: 16px;
+            height:100%;
         }
 
         #presentation .slide.active {
             display: flex;
+        }
+
+        #presentation-info {
+            height: 5%;
+            background-color: #ccc;
+            display:flex;
+            justify-content: center;
+            align-items: center;
         }
     </style>
 
@@ -44,12 +59,17 @@
 <body>
     <div id="container">
         <div id="presentation"></div>
+        <div id="presentation-info">
+            <span>Slide <span id="slide">0</span>/<span id="maxSlide">0</span></span>
+        </div>
     </div>
 
     <script>
         class Viewer {
             presentation = `<%= presentation.replaceAll("`", '\\`') %>`;
             $presentation = document.getElementById('presentation');
+            $maxSlide = document.getElementById('maxSlide');
+            $slide = document.getElementById('slide');
 
             currentSlide;
             slides;
@@ -57,7 +77,6 @@
 
             constructor() {
                 this.socket = io();
-
 
                 this.socket.on('error', (errorMessage) => {
                     console.error(errorMessage);
@@ -100,6 +119,9 @@
                 });
 
                 visibleSlide?.classList.add('active');
+
+                this.$maxSlide.innerText = this.slides.length;
+                this.$slide.innerText = this.currentSlide;
             }
 
             async initialize() {
