@@ -83,6 +83,31 @@
             border-left: orange 5px solid;
             padding-left: 8px;
         }
+
+        .slide-title {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 8px;
+            cursor: pointer;
+            flex-basis: calc(50% - 16px);
+        }
+
+        button:hover {
+            box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.24);
+        }
     </style>
 </head>
 
@@ -90,7 +115,12 @@
     <div id="container">
         <div id="editors">
             <div>
-                <h2>Edit your slides</h2>
+                <div class="slide-title">
+                    <h2>Edit your slides</h2>
+                    <div class="buttons">
+                        <button onclick="mdHandler.save()">Save</button>
+                    </div>
+                </div>
                 <div id="markdownEditor"></div>
             </div>
             <div>
