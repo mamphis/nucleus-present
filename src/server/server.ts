@@ -19,8 +19,12 @@ export class Server {
         this.app.use(express.json());
         this.app.set('view engine', 'ejs');
 
-        this.app.use('/node_modules/monaco-editor/min/vs', express.static('node_modules/monaco-editor/min/vs'))
+        this.app.use('/node_modules/monaco-editor/min/vs', express.static('node_modules/monaco-editor/min/vs'));
         this.app.use('/style', express.static('node_modules/katex/dist'))
+        this.app.use('/style/code.css', express.static('node_modules/highlight.js/styles/tokyo-night-dark.css'));
+        //    this.app.use('/style/code.css', (req, res, next) => {
+        //     res.sendFile('tokio-night-dark.css', { root: './node_modules/highlight.js/styles' });
+        // });
 
         this.app.use('/theme', themeRouter);
         this.app.use('/edit', editRouter);

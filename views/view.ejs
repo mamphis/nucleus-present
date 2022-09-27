@@ -6,10 +6,15 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/style/katex.min.css">
+    <link rel="stylesheet" href="/style/code.css">
     <title>Present</title>
 
     <script src="/socket.io/socket.io.js"></script>
     <style>
+        pre.hljs {
+            padding: 8px;
+        }
+
         body,
         html {
             margin: 0;
@@ -34,21 +39,27 @@
         }
 
         #presentation .slide {
-            display: none;
+            /* display: none; */
+            display: flex;
+            position: absolute;
             flex-direction: column;
             justify-content: center;
             padding-left: 16px;
-            height:100%;
+            height: 100%;
+            transform: translateX(-100vw);
+            transition: transform 0.3s linear;
         }
 
         #presentation .slide.active {
-            display: flex;
+            transform: translateX(0);
+            opacity: 1;
+
         }
 
         #presentation-info {
             height: 5%;
             background-color: #ccc;
-            display:flex;
+            display: flex;
             justify-content: center;
             align-items: center;
         }
