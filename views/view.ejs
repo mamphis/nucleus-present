@@ -1,12 +1,136 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>View</title>
+    <title>Present</title>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        #container {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            height: 100vh;
+        }
+
+        #container>div {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #presentation .slide {
+            display: none;
+        }
+
+        #presentation .slide.active {
+            display: flex;
+        }
+    </style>
+
 </head>
+
 <body>
-    
+    <div id="container">
+        <div id="presentation"></div>
+    </div>
+
+    <script>
+        class Viewer {
+            presentation = `<%= presentation.replaceAll("`", '\\`') %>`;
+            $presentation = document.getElementById('presentation');
+
+            currentSlide;
+            slides;
+            socket;
+
+            constructor() {
+                this.socket = io();
+
+
+                this.socket.on('error', (errorMessage) => {
+                    console.error(errorMessage);
+                });
+
+                this.socket.on('initialize presentation', (configuration) => {
+                    console.log('initialize presentation', configuration);
+                    this.initialize();
+                    this.currentSlide = configuration.currentSlide;
+                });
+
+                this.socket.on('set slide', (slide) => {
+                    console.log('set slide', slide);
+                    this.currentSlide = slide;
+
+                    this.setSlide();
+                });
+
+                this.socket.on('presentation started', () => {
+                    console.log('presentation started');
+                    this.initialize();
+                    this.currentSlide = 1;
+                })
+
+                this.socket.emit('watch presentation', this.presentation);
+            }
+
+            setSlide() {
+                if (!this.slides) {
+                    return;
+                }
+
+                this.$presentation.classList.remove('active')
+
+                const visibleSlide = this.slides.find(slide => slide.dataset.slideNo == this.currentSlide);
+                this.slides.forEach(slide => {
+                    if (slide !== visibleSlide) {
+                        slide.classList.remove('active');
+                    }
+                });
+
+                visibleSlide?.classList.add('active');
+            }
+
+            async initialize() {
+                if (this.currentSlide) {
+                    // already initialized
+                    return;
+                }
+
+                const response = await fetch('/present/' + this.presentation + '/html');
+                if (response.redirected) {
+                    location.href = response.url;
+                    return;
+                }
+                if (!response.ok) {
+                    return;
+                }
+
+                const parsedPresentation = await response.json();
+                this.$presentation.innerHTML = parsedPresentation.html;
+
+                // get all slides
+                this.slides = [...document.querySelectorAll('#presentation .slide')];
+                this.setSlide();
+            }
+        }
+
+
+
+        const viewer = new Viewer();
+
+    </script>
 </body>
+
 </html>

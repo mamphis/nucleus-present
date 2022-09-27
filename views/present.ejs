@@ -104,7 +104,7 @@
             </div>
         </div>
         <div>
-            <h2>Presentation</h2>
+            <h2>Presentation (Watchers: <span id="watcherCount">0</span>)</h2>
             <div id="presentationContainer">
                 <div id="presentation"></div>
                 <div id="currentSlide"></div>
@@ -119,6 +119,7 @@
             $presentation = document.getElementById('presentation');
             $currentSlide = document.getElementById('currentSlide');
             $nextSlide = document.getElementById('nextSlide');
+            $watcherCount = document.getElementById('watcherCount');
 
             currentSlide;
             slides;
@@ -131,6 +132,18 @@
                 this.socket.on('error', (errorMessage) => {
                     console.error(errorMessage);
                 });
+
+                this.socket.on('get configuration', (peerId) => {
+                    console.log('get configuration', peerId);
+                    this.socket.emit('initialize presentation', this.presentation, peerId, {
+                        currentSlide: this.currentSlide
+                    });
+                });
+
+                this.socket.on('update watchers', (count) => {
+                    console.log('update watchers', count);
+                    this.$watcherCount.innerText = count;
+                })
             }
             updateSlide(what) {
                 switch (what) {

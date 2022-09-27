@@ -45,18 +45,23 @@ export class Server {
                 watcher: Socket[],
             }
         } = {};
-        this.io.on("connection", (socket) => {
+        this.io.on("connection", (socket: Socket) => {
+            console.log('socket connected: ', socket.id);
             socket.on('watch presentation', (presentation: string) => {
+                console.log('watch presentation ' + presentation, socket.id, presentations[presentation]?.presenter?.id);
                 socket.join(presentation);
-                socket.to(presentation).emit('presentation started');
 
-                if (presentation! in presentations) {
+                if (!(presentation in presentations)) {
                     presentations[presentation] = {
                         watcher: [],
                     };
                 }
 
                 presentations[presentation].watcher.push(socket);
+                if (presentations[presentation].presenter) {
+                    presentations[presentation].presenter?.emit('get configuration', socket.id);
+                    presentations[presentation].presenter?.emit('update watchers', presentations[presentation].watcher.length);
+                }
             });
 
             socket.on('present', (presentation: string) => {
@@ -76,6 +81,17 @@ export class Server {
                 }
 
                 presentations[presentation].presenter = socket;
+                presentations[presentation].presenter?.emit('update watchers', presentations[presentation].watcher.length);
+            });
+
+            socket.on('initialize presentation', (presentation: string, peerId: string, config: any) => {
+                console.log('initialize presentation ' + presentation, socket.id, peerId, config);
+                if (!presentations[presentation]?.presenter) {
+                    socket.emit('error', 'This presentation already has an presenter.');
+                    return;
+                }
+
+                socket.to(peerId).emit('initialize presentation', config);
             });
 
             socket.on('set slide', (presentation: string, slide: number) => {
@@ -98,6 +114,8 @@ export class Server {
                     }
 
                     presentations[room].watcher = presentations[room].watcher.filter(w => w.id !== socket.id);
+                    presentations[room].presenter?.emit('update watchers', presentations[room].watcher.length);
+
                     if (presentations[room]?.presenter?.id === socket.id) {
                         presentations[room].presenter = undefined;
                     }
