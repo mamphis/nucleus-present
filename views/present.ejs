@@ -87,6 +87,11 @@
             flex: 1;
         }
 
+        #controls>div {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
         #controls button {
             background-color: #4CAF50;
             border: none;
@@ -98,6 +103,7 @@
             font-size: 16px;
             margin: 0 8px;
             cursor: pointer;
+            flex-basis: calc(50% - 16px);
         }
 
         #controls button:hover {
@@ -106,6 +112,12 @@
 
         #presentation {
             display: none;
+        }
+
+        @media (max-width:600px) {
+            #container {
+                display: none !important;
+            }
         }
     </style>
 
@@ -116,6 +128,7 @@
         <div id="controlPanel">
             <div id="notes">
                 <h2>Notes</h2>
+                <h4>Slide <span id="slide">0</span>/<span id="maxSlide">0</span></h4>
                 <div></div>
             </div>
             <div id="controls">
@@ -128,7 +141,7 @@
                 </div>
             </div>
         </div>
-        <div>
+        <div id="presentationPreview">
             <h2>Presentation (Watchers: <span id="watcherCount">0</span>)</h2>
             <div id="presentationContainer">
                 <style title="presentationStyle"></style>
@@ -147,6 +160,8 @@
             $nextSlide = document.getElementById('nextSlide');
             $watcherCount = document.getElementById('watcherCount');
             $notes = document.querySelector('#notes div');
+            $maxSlide = document.getElementById('maxSlide');
+            $slide = document.getElementById('slide');
 
             currentSlide;
             slides;
@@ -175,17 +190,57 @@
                     this.updateSlide(ev.key);
                     console.log(ev.key);
                 }
+
+                let startPoint = undefined;
+                document.ontouchstart = (ev) => {
+                    startPoint = {
+                        x: ev.changedTouches[0].screenX,
+                        y: ev.changedTouches[0].screenY,
+                    }
+                }
+
+                document.ontouchcancel = () => {
+                    startPoint = undefined;
+                }
+
+                document.ontouchend = (ev) => {
+                    if (!startPoint) {
+                        return;
+                    }
+
+                    const endPoint = {
+                        x: ev.changedTouches[0].screenX,
+                        y: ev.changedTouches[0].screenY,
+                    }
+
+                    if (Math.abs(startPoint.x - endPoint.x) > 50) {
+                        // We swiped at least 50px
+
+                        if (startPoint.x - endPoint.x < 0) {
+                            // We swiped right
+                            this.updateSlide('SwipeRight');
+                        } else {
+                            // We swiped left
+                            this.updateSlide('SwipeLeft');
+                        }
+                    }
+
+                    startPoint = undefined;
+                }
             }
 
             updateSlide(what) {
+                console.log("update slide", what);
                 switch (what) {
                     case 'first':
                         this.currentSlide = 1; break;
                     case 'prev':
                     case 'ArrowLeft':
+                    case 'SwipeRight':
                         this.currentSlide--; this.currentSlide = Math.max(1, this.currentSlide); break;
                     case 'next':
                     case 'ArrowRight':
+                    case 'SwipeLeft':
                         this.currentSlide++; this.currentSlide = Math.min(this.slides?.length ?? 1, this.currentSlide); break;
                     case 'last':
                         this.currentSlide = this.slides?.length ?? 1; break;
@@ -194,6 +249,7 @@
 
                 this.setSlide();
             }
+
             setSlide() {
                 if (!this.slides) {
                     return;
@@ -211,6 +267,9 @@
                 const comments = [...presenter.$currentSlide.querySelectorAll('.comment')];
                 comments.forEach(comment => comment.setAttribute('style', ''));
                 this.$notes.append(...comments);
+
+                this.$maxSlide.textContent = this.slides.length;
+                this.$slide.textContent = this.currentSlide;
             }
 
             async initialize() {
@@ -256,8 +315,6 @@
                 }
             }
         }
-
-
 
         const presenter = new Presenter();
         presenter.initialize();
