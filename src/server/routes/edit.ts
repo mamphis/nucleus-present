@@ -66,6 +66,21 @@ router.get('/:id/data', async (req: Request, res: Response, next: NextFunction) 
     });
 });
 
+router.get('/:id/preview', async (req: Request, res: Response, next: NextFunction) => {
+    const slideDir = (await readdir('./data')).find(f => f === req.params.id);
+
+    if (!slideDir) {
+        return res.status(404).end();
+    }
+
+    const slidesFile = resolve('./data', slideDir, 'slides');
+    const md = await stat(slidesFile).then(async () => (await readFile(slidesFile, { encoding: 'utf-8' })).toString()).catch(() => '');
+
+    const preview = md.split('@@@').slice(0, 2).join('@@@');
+    const html = MarkdownRenderer.it.render(preview);
+    return res.send(html.html);
+});
+
 router.post('/:id', async (req: Request, res: Response, next: NextFunction) => {
     await mkdir(resolve('./data', req.params.id), { recursive: true });
     if ('data' in req.body) {
@@ -78,5 +93,6 @@ router.post('/:id', async (req: Request, res: Response, next: NextFunction) => {
 
     return res.end();
 });
+
 
 export default router;
