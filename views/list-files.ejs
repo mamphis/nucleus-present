@@ -6,16 +6,171 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Current Files</title>
+    <style>
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+        }
+
+        body,
+        html,
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        #content {
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+        }
+
+        .slide-container {
+            display: grid;
+            grid-auto-rows: 30%;
+            grid-auto-columns: 30%;
+            grid-auto-flow: column;
+            gap: 1%;
+            flex-grow: 1;
+        }
+
+        .slide-container>div {
+            padding: 4px;
+            background-color: #f0f0f0;
+            display: flex;
+        }
+
+        .slide-container .slide-loader,
+        .slide-container .slide {
+
+            position: relative;
+            display: flex;
+            height: 100%;
+            width: 100%;
+        }
+
+        .slide-container .slide {
+            flex-direction: column;
+            justify-content: center;
+            overflow: hidden;
+            padding: 16px;
+            box-sizing: border-box;
+            border: 1px solid black;
+        }
+
+        .slide .spinner:after {
+            position: absolute;
+            animation: 1.5s linear infinite spinner;
+            animation-play-state: inherit;
+            border: solid 5px #cfd0d1;
+            border-bottom-color: #1c87c9;
+            border-radius: 50%;
+            content: "";
+            height: 40px;
+            top: 50%;
+            left: 50%;
+            transform: translate3d(-50%, -50%, 0);
+            width: 40px;
+            will-change: transform;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: translate3d(-50%, -50%, 0) rotate(0deg);
+            }
+
+            100% {
+                transform: translate3d(-50%, -50%, 0) rotate(360deg);
+            }
+        }
+
+        .edit-controls {
+            display: flex;
+            flex-direction: column;
+            padding: 4px;
+        }
+
+        .button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 8px;
+            cursor: pointer;
+        }
+
+        .button:hover {
+            box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.24);
+        }
+
+        .buttons {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            flex-grow: 1;
+        }
+    </style>
 </head>
 
 <body>
-    <ul>
-        <% files.forEach(file=> { %>
-            <li><a href="edit/<%= file %>">
-                    <%= file %>
-                </a></li>
-            <%})%>
-    </ul>
+    <div id="content">
+        <h1>Your Slides</h1>
+        <div class="slide-container">
+
+            <% files.forEach(file=> { %>
+                <div>
+                    <div class="edit-controls">
+                        <h3>
+                            <%= file %>
+                        </h3>
+                        <div class="buttons">
+                            <a class="button" href="edit/<%= file %>">
+                                Edit
+                            </a>
+                            <a class="button" href="present/<%= file %>/present">
+                                Present
+                            </a>
+                            <a class="button" href="present/<%= file %>">
+                                View
+                            </a>
+                        </div>
+                    </div>
+                    <div class="slide-loader" data-url="edit/<%= file %>/preview">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+                <%})%>
+        </div>
+    </div>
+
+    <script>
+        const slides = document.querySelectorAll('.slide-loader');
+        slides.forEach(async slide => {
+            const url = slide.dataset.url;
+
+            if (!url) {
+                return;
+            }
+
+            const response = await fetch(url);
+            if (!response.ok) {
+                slide.innerHTML = '';
+                return;
+            }
+
+            slide.innerHTML = await response.text();
+        })
+    </script>
 </body>
 
 </html>
