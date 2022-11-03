@@ -1,6 +1,7 @@
 import express, { Application } from "express";
 import { createServer, Server as HttpServer } from "http";
 import { Server as SocketIoServer, Socket } from 'socket.io';
+import { logger } from '@mamphis/express-utils';
 
 import editRouter from './routes/edit';
 import themeRouter from './routes/theme';
@@ -25,7 +26,7 @@ export class Server {
         //    this.app.use('/style/code.css', (req, res, next) => {
         //     res.sendFile('tokio-night-dark.css', { root: './node_modules/highlight.js/styles' });
         // });
-
+        this.app.use(logger());
         this.app.use('/theme', themeRouter);
         this.app.use('/edit', editRouter);
         this.app.use('/present', presentRouter);
