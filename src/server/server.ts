@@ -42,7 +42,7 @@ export class Server {
 
         this.app.use('/theme', authenticator.auth, themeRouter);
         this.app.use('/edit', authenticator.auth, editRouter);
-        this.app.use('/present', authenticator.auth, presentRouter);
+        this.app.use('/present', presentRouter(authenticator.auth));
         this.app.use((req, res, next) => {
             return res.redirect('/edit');
         });
