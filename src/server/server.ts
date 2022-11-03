@@ -1,11 +1,13 @@
 import express, { Application } from "express";
 import { createServer, Server as HttpServer } from "http";
 import { Server as SocketIoServer, Socket } from 'socket.io';
-import { logger } from '@mamphis/express-utils';
+import cookieParser from 'cookie-parser';
+import { logger, makeAuthenticator, DiskStorage } from '@mamphis/express-utils';
 
 import editRouter from './routes/edit';
 import themeRouter from './routes/theme';
 import presentRouter from './routes/present';
+import { errorHandler } from "@mamphis/express-utils/out/error";
 
 export class Server {
     private app: Application;
@@ -18,6 +20,7 @@ export class Server {
         this.io = new SocketIoServer(this.server);
 
         this.app.use(express.json());
+        this.app.use(cookieParser());
         this.app.set('view engine', 'ejs');
 
         this.app.use('/node_modules/monaco-editor/min/vs', express.static('node_modules/monaco-editor/min/vs'));
@@ -26,15 +29,24 @@ export class Server {
         //    this.app.use('/style/code.css', (req, res, next) => {
         //     res.sendFile('tokio-night-dark.css', { root: './node_modules/highlight.js/styles' });
         // });
+
         this.app.use(logger());
-        this.app.use('/theme', themeRouter);
-        this.app.use('/edit', editRouter);
-        this.app.use('/present', presentRouter);
+
+        this.route();
+        this.configure();
+    }
+
+    async route() {
+        const storage = new DiskStorage('./users.json', 'ed57r8uzb8nolah7hg80inksadß0äöp');
+        const authenticator = await makeAuthenticator(storage)
+
+        this.app.use('/theme', authenticator.auth, themeRouter);
+        this.app.use('/edit', authenticator.auth, editRouter);
+        this.app.use('/present', authenticator.auth, presentRouter);
         this.app.use((req, res, next) => {
             return res.redirect('/edit');
         });
-
-        this.configure();
+        this.app.use(errorHandler());
     }
 
     start() {
